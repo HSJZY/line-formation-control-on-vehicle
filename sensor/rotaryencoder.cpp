@@ -227,7 +227,6 @@ void rotaryEncoder::updateRightEncoders()
 
         //std::cout<<"left  rv2:"<<rightEncoder->rv2<<"  rv1"<<rightEncoder->rv1<<std::endl;
 
-
         float betweenTime=(currentTime-rightEncoder->tp1)/1000.0;
 
         //float betweenAngle=(leftEncoder->rv2-leftEncoder->rv1)/40*360;
@@ -255,8 +254,7 @@ void rotaryEncoder::updateLeftEncoders()
         leftEncoder->m_value++;
     else /*if(moveDirection==-1)*/
         leftEncoder->m_value--;
-    //else
-        //return;
+
     // get the current time for calculating the interval between two interrupt
     struct timeval tp;
     gettimeofday(&tp,NULL);
@@ -266,7 +264,7 @@ void rotaryEncoder::updateLeftEncoders()
     //this param aims to remove glitch
     int delayTime=10;
     //every n interval for a speed calculation
-    int n=4;
+    int n=5;
     leftEncoder->tInterval++;
     if(leftEncoder->tInterval==1)
     {
@@ -280,27 +278,23 @@ void rotaryEncoder::updateLeftEncoders()
         leftEncoder->rv2=leftEncoder->m_value;
 
         //std::cout<<"left  rv2:"<<leftEncoder->rv2<<"  rv1"<<leftEncoder->rv1<<std::endl;
-
-
         float betweenTime=(currentTime-leftEncoder->tp1)/1000.0;
-
-        //float betweenAngle=(leftEncoder->rv2-leftEncoder->rv1)/40*360;
+//        std::cout<<"currentTime:"<<currentTime<<" "<<leftEncoder->tp1<<std::endl;
 
         float betweenAngle=(leftEncoder->rv2-leftEncoder->rv1)/40.0*360;
 
         //leftEncoder->lastAngVel=leftEncoder->m_angularVelocity;
         float av=betweenAngle/betweenTime;
-        Kalman KalmanD1(1,30,1023,leftEncoder->m_angularVelocity_1);
+//        Kalman KalmanD1(1,30,1023,leftEncoder->m_angularVelocity_1);
         //Kalman(0.125,32,1023,0)
-        leftEncoder->m_angularVelocity=KalmanD1.getFilteredValue(av);
-        //leftEncoder->m_angularVelocity=leftEncoder->m_angularVelocity_1*0.2+av*0.8;
-        //std::cout<<std::endl<<"   Left: Angle interval"<<betweenAngle<<"   time interval"<<betweenTime<<"   angular velocity"<<leftEncoder->m_angularVelocity<<"  calculation "<<betweenAngle/betweenTime<<std::endl;
+
+//        leftEncoder->m_angularVelocity=KalmanD1.getFilteredValue(av);
+        leftEncoder->m_angularVelocity=leftEncoder->m_angularVelocity_1*0.2+av*0.8;
+//        std::cout<<std::endl<<"   Left: Angle interval"<<betweenAngle<<"   time interval"<<betweenTime<<"   angular velocity"<<leftEncoder->m_angularVelocity<<"  calculation "<<betweenAngle/betweenTime<<std::endl;
     }
     delay(delayTime);
     //bool isMoveForward=leftEncoder->isMovingForward(LeftMotorIn1,LeftMotorIn2,8);
 }
-
-
 
 void rotaryEncoder::checkSpeedZero()
 {

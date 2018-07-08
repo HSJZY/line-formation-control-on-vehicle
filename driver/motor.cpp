@@ -74,6 +74,12 @@ motor::motor(int pinA, int pinB)
     this->dutyCycle_k_1=StartDutyCycle;
 }
 
+
+void motor::turnOnMotor()
+{
+    this->turnOff=false;
+}
+
 void motor::turnOffMotor()
 {
     digitalWrite(this->m_pinA,LOW);
@@ -119,20 +125,16 @@ void motor::DriveMotor(float speed,int side,int totalTime)
         else
             std::cerr<<"Please input the correct side";
 
-        //int directionCurrent=sgn(currentSpeed);//current speed is moving forward(1),backward(-1) or still(0)
-
         this->e_k=(abs(speed)-abs(currentSpeed))/180;// calculate the velocity error for pid control
         if(abs(e_k)<0.2)
             e_k=0;
-        //this->e_k=atan2(sin(e_k),cos(e_k));// control the gain in (-pi,pi)
-        //this->e_k=atan2(sin(e_k),cos(e_k));
 
         //get the error of three parameter
         this->e_P=this->e_k;
-        this->e_I=this->E_k+e_I*0.1;
-        this->e_D=(this->e_k-this->e_k_1)/0.1;
+//        this->e_I=this->E_k+e_I*0.1;
+//        this->e_D=(this->e_k-this->e_k_1)/0.1;
 
-        float gain=kp*e_P+ki*e_I+kd*e_D;// calculate the gains for pid control
+        float gain=kp*e_P/*+ki*e_I+kd*e_D*/;// calculate the gains for pid control
         float gainLimited=10;
         if(abs(gain)>gainLimited)
         {
@@ -153,7 +155,6 @@ void motor::DriveMotor(float speed,int side,int totalTime)
 
         pwmDriveMotor(this->dutyCycle_k,10,directionSetted);
 
-        this->E_k=this->e_I;
         this->e_k_1=this->e_k;
         this->dutyCycle_k_1=this->dutyCycle_k;
     }
@@ -161,6 +162,7 @@ void motor::DriveMotor(float speed,int side,int totalTime)
 
 void motor::pwmDriveMotor(float dutyCycle,float driveTime,int direction)
 {
+//    dutyCycle=0.15;
     if(wiringPiSetup()==-1)
     {
         std::cout<<"Setup wiring pi failed";

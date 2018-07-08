@@ -2,6 +2,7 @@
 #define KINEMATICCONTROLLER_H
 
 #include "../driver/motor.h"
+#include "../util/pid.h"
 
 class kinematicController
 {
@@ -16,6 +17,8 @@ public:
     void lineForward(float forwardDistance);
     void lineForward(float forwardDistance,float forwardAngle_rad);
     void moveForward(float speed_m_s,float forwardAngle_rad,float totalTime_s);
+
+    int self_rotate_target(float target_angle);
 private:
     float m_selfDirection;
     float m_rotate2direction;

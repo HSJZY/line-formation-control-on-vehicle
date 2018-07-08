@@ -47,16 +47,16 @@ private:
      int isMovingForward(int side);
 private:
     int m_pin;
-    int m_value;
-    int lastVal;
+    long int m_value;
+    long int lastVal;
 
     float m_angularVelocity;
     float m_angularVelocity_1;
     float lastAngVel;
 
     int tInterval;
-    float tp1;//time position 1
-    float tp2;//time position 2
+    long tp1;//time position 1
+    long tp2;//time position 2
     int rv1;// record value 1 for angular velocity calculation
     int rv2;// record value 2 for current time
 

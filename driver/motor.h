@@ -10,6 +10,7 @@ public:
 
     void DriveMotor(float speed,int side,int totalTime);
     void turnOffMotor();
+    void turnOnMotor();
 
     float getDutyCycle_k();
     void setDutyCycle_k_1(float dutyCycle);

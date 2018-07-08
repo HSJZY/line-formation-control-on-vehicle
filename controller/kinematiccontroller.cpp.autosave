@@ -79,50 +79,11 @@ int kinematicController::self_rotate_target(float target_angle)
     }
     carStatus info_status;
     float cur_yaw=info_status.getCurAngleOfMPU();
-    float self_rotate_angle=-(target_angle-cur_yaw);
+    float self_rotate_angle=(target_angle-cur_yaw);
 
     float self_rotate_rad=self_rotate_angle/180*PI;
     selfRotate(self_rotate_rad);
     return is_face_forwrd;
-
-//    float wheelRadius=WheelRadius;
-//    float wheelBaseLength=WheelBaseLength;
-//    differentialDrive diffCalculator(wheelRadius,wheelBaseLength);
-
-//    int clock_wise;
-//    if(target_angle>0)
-//    {
-//        clock_wise=1;
-//    }
-//    else
-//    {
-//        clock_wise=-1;
-//    }
-
-//    float leftDutyCycle_k=StartDutyCycle;
-//    float rightDutyCycle_k=StartDutyCycle;
-
-//    carStatus infoStatus;
-//    while(1)
-//    {
-//        if(abs(infoStatus.getCurAngleOfMPU()-target_angle)<5)
-//        {
-//            break;
-//        }
-//        float wl,wr;
-
-//        wl=200*clock_wise;
-//        wr=-200*clock_wise;
-
-//        thread leftMotorThread(&kinematicController::runMotorThread,this,LeftSide,wl,leftDutyCycle_k);
-//        thread rightmotorThread(&kinematicController::runMotorThread,this,RightSide,wr,rightDutyCycle_k );
-
-//        leftMotorThread.join();
-//        rightmotorThread.join();
-
-//        leftDutyCycle_k=leftDutyCycle_k_1;
-//        rightDutyCycle_k=rightDutyCycle_k_1;
-//    }
 }
 
 /** self rotate to the given angle

@@ -11,10 +11,10 @@ public:
     void setWheelRadius(float wheelRadius);
     void setWheelBaseLength(float wheelBaseLength);
 
-    //@param v:the car velocity
-    //@param w:the car angular velocity
-    //@param vl:the velocity of the left motor to be calculated
-    //@param vr:the velocity of the right motor to be calculated
+    ///@param v:the car velocity
+    ///@param w:the car angular velocity
+    ///@param vl:the velocity of the left motor to be calculated
+    ///@param vr:the velocity of the right motor to be calculated
     void uni2diff(float v,float w,float &vl,float &vr);
 
     //int sgn(float value);

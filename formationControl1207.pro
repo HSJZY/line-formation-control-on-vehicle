@@ -13,18 +13,17 @@ SOURCES += main.cpp \
     sensor/MPU6050.cpp \
     sensor/I2Cdev.cpp \
     controller/kinematiccontroller.cpp \
-    controller/lineformationcontroller.cpp \
     driver/motor.cpp \
-    driver/servo.cpp \
-    util/cameraposition.cpp \
-    util/dataLib.cpp \
     util/differentialdrive.cpp \
     util/kalman.cpp \
-    util/undistortion.cpp \
     sensor/rotaryencoder.cpp \
     sensor/demo_dmp.cpp \
     carstatus.cpp \
-    util/log.cpp
+    util/log.cpp \
+    util/pid.cpp \
+    util/udp_client.cpp \
+    controller/line_formation_control.cpp \
+    util/utils.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -42,11 +41,7 @@ HEADERS += \
     sensor/MPU6050.h \
     sensor/I2Cdev.h \
     controller/kinematiccontroller.h \
-    controller/lineformationcontroller.h \
     driver/motor.h \
-    driver/servo.h \
-    util/cameraposition.h \
-    util/dataLib.h \
     util/differentialdrive.h \
     util/kalman.h \
     util/undistortion.h \
@@ -55,9 +50,13 @@ HEADERS += \
     sensor/helper_3dmath.h \
     globalsettings.h \
     carstatus.h \
-    util/log.h
+    util/log.h \
+    util/pid.h \
+    util/udp_client.h \
+    controller/line_formation_control.h \
+    util/utils.h
 
-unix:!macx: LIBS += -L$$PWD/../../../../usr/local/lib/ -lraspicam_cv -lraspicam -lwiringPi -lopencv_calib3d -lARToolKitPlus -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_imgproc
+unix:!macx: LIBS += -L$$PWD/../../../../usr/local/lib/ -lwiringPi -lopencv_calib3d -lARToolKitPlus -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_imgproc
 
 
 

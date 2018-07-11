@@ -1,13 +1,13 @@
 #ifndef LINE_FORMATION_CONTROL_H
 #define LINE_FORMATION_CONTROL_H
-#include"../globalsettings.h"
+#include"globalsettings.h"
 
 #include<iostream>
 #include<vector>
 #include<algorithm>
 #include<math.h>
-#include"../util/utils.h"
-#include"../util/pid.h"
+#include"utils.h"
+#include"pid.h"
 #include"kinematiccontroller.h"
 #include"carstatus.h"
 
@@ -23,6 +23,8 @@ public:
 private:
     vector<vector<float> > calc_boundary(vector<vector<vector<float> > > agents_position);
     vector<vector<vector<float> > > subtract_one_dim(vector<vector<vector<float> > > agents_postion_3D,int dim);
+    void reverse_axis(vector<vector<vector<float> > > &original_data,int axis);
+
     vector<vector<float> > calc_relative_pos(vector<vector<float> > abs_pos,vector<float> original);
 
     vector<vector<float> > get_agents_position(vector<vector<vector<float> > > agents_postion_2D);
@@ -30,7 +32,8 @@ private:
     vector<vector<float> > convert_2D_dist_ang(vector<vector<float> > relative_pos);
     vector<vector<float> > choose_nearest_two_neighbors_line(vector<vector<float> > vec_total_dis_angle,float direction_angle);
     vector<float> calc_target_dist_direction(vector<vector<float> > two_nearby,vector<float> rep_force);
-    void start_moving(vector<float> target_dist_ang,struct Robot_PID& successed_pid,int& last_drive_mode);
+public:
+    void start_moving(vector<float> target_dist_ang);
     vector<float> calc_rep_force(vector<vector<float> > boundary,vector<vector<float> > agents_position);
 //临时测试用
 //public:

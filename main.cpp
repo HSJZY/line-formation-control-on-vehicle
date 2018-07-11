@@ -1,3 +1,6 @@
+#include "mainwindow.h"
+#include <QApplication>
+
 #include<iostream>
 #include<thread>
 #include<wiringPi.h>
@@ -5,12 +8,15 @@
 #include<string>
 #include<opencv2/core.hpp>
 #include<QDebug>
+#include <QApplication>
 #include"globalsettings.h"
-#include"controller/kinematiccontroller.h"
-#include"sensor/hmc5883l.h"
-#include"sensor/demo_dmp.h"
+#include"kinematiccontroller.h"
+#include"mpu/demo_dmp.h"
 #include"carstatus.h"
-#include"sensor/rotaryencoder.h"
+#include"rotaryencoder.h"
+#include"udp_client.h"
+#include"utils.h"
+#include"line_formation_control.h"
 
 using namespace std;
 using namespace cv;
@@ -57,13 +63,46 @@ void initMPU6050()
     curCarStatue.setAbsAngleOfMPU(-lastYaw);
 
     std::cout<<"press any char to continue"<<std::endl;
-    //cv::waitKey(0);
-    //int key;
-    //cin>>key;
+
     std::cout<<"testing";
     thread mpuThread(MPUThread);
     mpuThread.detach();
 }
+
+void update_postion_thread(string addr,int port)
+{
+    udp_client udp_listener(addr,port);
+    carStatus cur_robot_status;
+    while(1)
+    {
+        string recv_formation=udp_listener.start_listen();
+        if(recv_formation=="")
+        {
+            std::cerr<<"connenction error";
+            continue;
+        }
+        vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation);
+        cur_robot_status.set_agents_position(vec_agents_position);
+        delay(30);
+    }
+}
+
+void init_udp_thread()
+{
+    string addr="192.168.43.95";
+    int port=5000;
+    udp_client udp_test(addr,port);
+    udp_test.start_listen();
+    string recv_formation=udp_test.start_listen();
+    vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation);
+    carStatus cur_robot_status;
+    cur_robot_status.set_agents_position(vec_agents_position);
+
+    thread agents_postion_listen_thread(update_postion_thread,addr,port);
+    agents_postion_listen_thread.detach();
+}
+
+
 // start encoder counting in a new thread
 void encoderThread(rotaryEncoder testEncoder)
 {
@@ -72,23 +111,35 @@ void encoderThread(rotaryEncoder testEncoder)
 
 void motorThread(motor testMotor)
 {
-    testMotor.DriveMotor(/*angular velocity*/-200,/*left*/0,10000);
+    testMotor.DriveMotor(/*angular velocity*/200,10000);
 }
 void motorThread1(motor testMotor)
 {
-    testMotor.DriveMotor(/*angular velocity*/400,/*right*/1,1000);
+    testMotor.DriveMotor(/*angular velocity*/400,1000);
 
 }
 
 void selfRotateThread(kinematicController Rotate)
 {
-    Rotate.selfRotate(1.8);
+    Rotate.self_rotate_target(60);
+//    Rotate.selfRotate(1.8);
 }
 
 void lineThread(kinematicController lineRun)
 {
-    lineRun.goToGoal(1,-1);
+//    lineRun.goToGoal(1,-1);
+    lineRun.moveForward(0.16,-2.96,5);
     //lineRun.lineForward(1,0);
+}
+void test_move_thread()
+{
+    line_formation_control line_formation;
+    vector<float> test_move={600,1};
+    int i=20;
+    while(i--)
+    {
+    line_formation.start_moving(test_move);
+    }
 }
 
 
@@ -110,26 +161,44 @@ int main(int argc, char *argv[])
     rightMotor.turnOffMotor();
     leftMotor.turnOffMotor();
 
+    leftMotor.turnOnMotor();
+    rightMotor.turnOnMotor();
+
 
     initMPU6050();
+    init_udp_thread();
+    test_move_thread();
 
-    //kinematicController Rotate,lineR;
-    //thread rotateThread(selfRotateThread,Rotate);
-    //rotateThread.detach();
-    //thread line(lineThread,lineR);
+    line_formation_control line_formation;
+
+    line_formation.start_line_formation();
+
+//    QApplication a(argc, argv);
+//    MainWindow w;
+//    w.show();
+
+//    return a.exec();
+
+
+    kinematicController Rotate,lineR;
+//    thread rotateThread(selfRotateThread,Rotate);
+//    rotateThread.join();
+    thread line(lineThread,lineR);
     //line.detach();
-   // line.join();
+    line.join();
     //rotateThread.join();
 
-    leftMotor.turnOnMotor();
 
-    thread leftMotorThread(motorThread,leftMotor);
+//    thread leftMotorThread(motorThread,leftMotor);
+//    thread rightMototThread(motorThread,rightMotor);
+//    rightMototThread.join();
+//    leftMotorThread.join();
+
 //    leftMotor.turnOffMotor();
-    leftMotorThread.detach();
+//    leftMotorThread.detach();
 
     //delay(1000);
-    //thread rightMototThread(motorThread1,rightMotor);
-    //rightMototThread.detach();
+
     //rightMotor.turnOffMotor();
     //cout<<testEncoder.getValue()<<"   ";
 
@@ -160,7 +229,7 @@ int main(int argc, char *argv[])
     {
         //cout<<"left"<<leftMotor.gettesting()<<"right"<<rightMotor.gettesting()<<endl;
 
-       
+
        cout<<"leftEncoder"<<endl;
         cout<<leftEncoder.getValue()<<"   ";
         cout<<leftEncoder.getAngularVelocity()<<endl;
@@ -175,3 +244,4 @@ int main(int argc, char *argv[])
 
     }*/
 }
+

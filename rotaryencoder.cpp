@@ -8,8 +8,8 @@
 #include<cmath>
 #include<signal.h>
 #include"globalsettings.h"
-#include"../util/kalman.h"
-#include"../driver/motor.h"
+#include"kalman.h"
+#include"motor.h"
 
 //rotaryEncoder* rotaryEncoder::m_rotaryEncoder;
 rotaryEncoder* rotaryEncoder::leftEncoder;
@@ -50,9 +50,9 @@ rotaryEncoder::rotaryEncoder(int pin)
 
 float rotaryEncoder::getStaticAngularVelocity(int side)
 {
-    if(side==0)
+    if(side==LeftSide)
         return leftEncoder->getAngularVelocity();
-    else if(side==1)
+    else if(side==RightSide)
         return rightEncoder->getAngularVelocity();
     else
         std::cerr<<"Please input the correct side";
@@ -212,7 +212,7 @@ void rotaryEncoder::updateRightEncoders()
     //this param aims to remove glitch
     int delayTime=10;
     //every n interval for a speed calculation
-    int n=4;
+    int n=5;
     rightEncoder->tInterval++;
     if(rightEncoder->tInterval==1)
     {
@@ -236,9 +236,8 @@ void rotaryEncoder::updateRightEncoders()
         //leftEncoder->lastAngVel=leftEncoder->m_angularVelocity;
         float av=betweenAngle/betweenTime;
 
-        Kalman KalmanD1(1,30,1023,rightEncoder->m_angularVelocity_1);
-        //Kalman(0.125,32,1023,0)
-        rightEncoder->m_angularVelocity=KalmanD1.getFilteredValue(av);
+        rightEncoder->m_angularVelocity=rightEncoder->m_angularVelocity_1*0.2+av*0.8;
+
         //std::cout<<std::endl<<"   Left: Angle interval"<<betweenAngle<<"   time interval"<<betweenTime<<"   angular velocity"<<rightEncoder->m_angularVelocity<<"  calculation "<<betweenAngle/betweenTime<<std::endl;
     }
     delay(delayTime);

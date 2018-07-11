@@ -11,7 +11,7 @@
 #include<string>
 #include<vector>
 #include <unistd.h>
-#include"../globalsettings.h"
+#include"globalsettings.h"
 #include<thread>
 
 using namespace std;

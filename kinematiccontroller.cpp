@@ -1,5 +1,5 @@
 #include "kinematiccontroller.h"
-#include"../util/differentialdrive.h"
+#include"differentialdrive.h"
 #include<math.h>
 #include<vector>
 #include<thread>
@@ -7,9 +7,9 @@
 #include<signal.h>
 #include<wiringPi.h>
 #include<sys/time.h>
-#include"../sensor/rotaryencoder.h"
-#include"../carstatus.h"
-#include"../globalsettings.h"
+#include"rotaryencoder.h"
+#include"carstatus.h"
+#include"globalsettings.h"
 
 
 using namespace std;
@@ -269,15 +269,32 @@ void kinematicController::runMotorThread(int side, float AngularVelocity, float 
     {
         motor localMotor(LeftMotorIn1,LeftMotorIn2);
         localMotor.setDutyCycle_k_1(dutyCycle);
-        localMotor.DriveMotor(AngularVelocity,side,200);
+        localMotor.DriveMotor(AngularVelocity,200);
         this->leftDutyCycle_k_1=localMotor.getDutyCycle_k();
     }
     else if(side==RightSide)
     {
         motor localMotor(RightMotorIn3,RightMotorIn4);
         localMotor.setDutyCycle_k_1(dutyCycle);
-        localMotor.DriveMotor(AngularVelocity,side,200);
+        localMotor.DriveMotor(AngularVelocity,200);
         this->rightDutyCycle_k_1=localMotor.getDutyCycle_k();
+    }
+    else
+        std::cerr<<"Incorrect side input";
+}
+
+void kinematicController::runMotorThread_dutycycle(int side, float dutyCycle)
+{
+    int direction=sgn(dutyCycle);
+    if(side==LeftSide)
+    {
+        motor localMotor(LeftMotorIn1,LeftMotorIn2);
+        localMotor.driveMotor_dutycycle(dutyCycle,200);
+    }
+    else if(side==RightSide)
+    {
+        motor localMotor(RightMotorIn3,RightMotorIn4);
+        localMotor.driveMotor_dutycycle(dutyCycle,200);
     }
     else
         std::cerr<<"Incorrect side input";
@@ -374,206 +391,107 @@ void kinematicController::lineForward(float forwardDistance)
     }
 }
 
+
+
 /** drive the car move forward at a certain speed in a given direction for a given time
  * @param speed_m_s: the given speed(m/s),the speed should larger than 0.04 and smaller than 0.25;
  * @param forwardAngle_rad: the given direction(rad),the feasible field [-PI,PI];
  * @param totalTime_s:the total time to move forward at the certain direction
  */
-void kinematicController::moveForward(float speed_m_s, float forwardAngle_rad, float totalTime_s)
+void kinematicController::moveForward(float ratio_dutyCycle, float forwardAngle_rad, float totalTime_s,float diff_dutyCycle)
 {
-    if(abs(speed_m_s)<0.04)
+    float forwardAngle_deg=forwardAngle_rad*180/PI;
+    int reverse_direction=1;
+
+    //如果角度在－90到90度之外，保持向前的朝向，向反方向运行
+    if(forwardAngle_deg<-90)
     {
-        speed_m_s=sgn(speed_m_s)*0.04;
+        forwardAngle_deg+=180;
+        reverse_direction=-1;
     }
-    else if(abs(speed_m_s)>0.25)
+    else if(forwardAngle_deg>90)
     {
-        speed_m_s=sgn(speed_m_s)*0.25;
+        forwardAngle_deg-=180;
+        reverse_direction=-1;
+    }
+    forwardAngle_rad=forwardAngle_deg/180*PI;
+
+    ratio_dutyCycle*=reverse_direction;
+
+    if(ratio_dutyCycle<-1)
+    {
+        ratio_dutyCycle=-1;
+    }
+    else if(ratio_dutyCycle>1)
+    {
+        ratio_dutyCycle=1;
     }
 
-    float ratioVelocity_deg=speed_m_s*360/(2*PI*WheelRadius);
-
-    carStatus infoCar;
-    // adjust the car to the forward direction;
-    float selfAngle=infoCar.getCurAngleOfMPU();
-    float selfAngle_rad=selfAngle/180*PI;
-    float rotateAngle_rad=forwardAngle_rad-selfAngle_rad;
-    selfRotate(rotateAngle_rad);
-
-    delay(100);
-
+    //定义开始和结束的时间
     struct timeval timerBreakStart,timerBreakEnd;
     gettimeofday(&timerBreakStart,NULL);
     long int startTime_ms=timerBreakStart.tv_sec*1000+timerBreakStart.tv_usec/1000;
     long int endTime_ms=startTime_ms;
 
-    float leftDutyCycle_k=StartDutyCycle;
-    float rightDutyCycle_k=StartDutyCycle;
+    float left_ratio_dutycycle=ratio_dutyCycle-diff_dutyCycle;
+    float right_ratio_dutycycle=ratio_dutyCycle+diff_dutyCycle;
+
     while(1)
     {
+        left_ratio_dutycycle=ratio_dutyCycle;
+        right_ratio_dutycycle=ratio_dutyCycle;
+
         if(endTime_ms-startTime_ms>totalTime_s*1000)
             break;
 
-        float leftAppend_deg=0;
-        float rightAppend_deg=0;
+        float leftAppend_dtcy=0;
+        float rightAppend_dtcy=0;
 
-        float curAngle=infoCar.getCurAngleOfMPU();
-        float curAngle_rad=curAngle/180*PI;
-        float rotateAngle=forwardAngle_rad-curAngle_rad;
-        //std::cout<<"rotateAngle"<<rotateAngle<<"  curAngle_rad"<<curAngle_rad<<std::endl;
-        if(abs(rotateAngle)>0.03)
+        carStatus infoCar;
+        float curAngle_deg=infoCar.getCurAngleOfMPU();
+        float curAngle_rad=curAngle_deg/180*PI;
+
+        float diff_angle_rad=forwardAngle_rad-curAngle_rad;
+
+        if(abs(diff_angle_rad)>0.02)
         {
-            float K_P=500;
-            if(rotateAngle>0)
+            float a=0.25;
+            float b=1.35;
+
+            float K_P=a*log(b+abs(diff_angle_rad))/2.0;
+
+            if(K_P<0.04)
+                K_P*=2.5;
+            else if(K_P<=0.06)
+                K_P*=0.22;
+            else if(K_P<=0.11)
+                K_P=0.12;
+            else if(K_P>0.3)
+                K_P=0.3;
+            K_P=K_P/0.3*0.2;
+            if(diff_angle_rad>0)
             {
-                rightAppend_deg=K_P*abs(rotateAngle);
+                rightAppend_dtcy=K_P;
+                leftAppend_dtcy=-K_P;
             }
             else
             {
-                leftAppend_deg=K_P*abs(rotateAngle);
+                leftAppend_dtcy=K_P;
+                rightAppend_dtcy=-K_P;
             }
         }
-        float leftSetVelocity=ratioVelocity_deg+leftAppend_deg;
-        float rightSetVelocity=ratioVelocity_deg+rightAppend_deg;
+        left_ratio_dutycycle+=leftAppend_dtcy;
+        right_ratio_dutycycle+=rightAppend_dtcy;
 
-        thread leftMotorThread(&kinematicController::runMotorThread,this,LeftSide,leftSetVelocity,leftDutyCycle_k);
-        thread rightmotorThread(&kinematicController::runMotorThread,this,RightSide,rightSetVelocity,rightDutyCycle_k );
+        std::cout<<"diff_angle_rad"<<diff_angle_rad<<"  curAngle_deg"<<curAngle_deg<<" left_ratio_dutycycle:"<<left_ratio_dutycycle<<" right_ratio_dutycycle:"<<right_ratio_dutycycle<<"leftAppend_dtcy"<<leftAppend_dtcy<<std::endl;
+
+        thread leftMotorThread(&kinematicController::runMotorThread_dutycycle,this,LeftSide,left_ratio_dutycycle);
+        thread rightmotorThread(&kinematicController::runMotorThread_dutycycle,this,RightSide,right_ratio_dutycycle );
         leftMotorThread.join();
         rightmotorThread.join();
-
-        leftDutyCycle_k=this->leftDutyCycle_k_1;
-        rightDutyCycle_k=this->rightDutyCycle_k_1;
 
         gettimeofday(&timerBreakEnd,NULL);
         endTime_ms=timerBreakEnd.tv_sec*1000+timerBreakEnd.tv_usec/1000;
     }
 
 }
-
-/*
-//self rotate to the desired direction
-//@param angle: is calculated by polar coordinate angle=desiredDirection-selfDirection;(/rad)
-//if angle is positive,the car rotate ifself for the angle in clockwise,vice verse
-void kinematicController::selfRotate(float angle)
-{
-    float wheelRadius=WheelRadius;
-    float wheelBaseLength=WheelBaseLength;
-    differentialDrive diffCalculator(wheelRadius,wheelBaseLength);
-
-    float lastDutyCycle=0.5;
-    if(angle>PI)
-        angle=-1*(2*PI-angle);
-
-
-    if(angle>0)
-    {
-        rotaryEncoder infoEncoder;//this encoder only get the information of the encoder
-
-        int rightStartValue=infoEncoder.getStaticValue(RightSide);
-        //the rotate angle is positive,left motor keep still,the right motor start to move
-        //motor rightMotor(RightMotorIn3,RightMotorIn4);
-        int counts=40*PI/(wheelBaseLength*angle/(2*wheelRadius));
-
-        carStatus infoCarStatus;
-        float startSelfAngle=infoCarStatus.getCurAngleOfMPU();
-        while(1)
-        {
-            float endSelfAngle=infoCarStatus.getCurAngleOfMPU();
-            float betweenAngle_rad=(endSelfAngle-startSelfAngle)/180*PI;
-
-
-            float k=1;
-            float w=k*sin(angle-betweenAngle_rad);
-            float v=w*wheelBaseLength/2;
-            //float v=0;
-            float vr,vl;
-
-            diffCalculator.uni2diff(v,w,vl,vr);
-            float wr=vr/wheelRadius;
-            //float wl=vl/wheelRadius;
-
-            lastDutyCycle=selfRotateThread(RightSide,wr,lastDutyCycle);
-            //thread motorThread(&kinematicController::driveMotorThread,this,RightSide,wr);
-            //motorThread.detach();
-
-            int rightCurrentValue=infoEncoder.getStaticValue(RightSide);
-            int accumulateValue=rightCurrentValue-rightStartValue;
-
-
-
-            if(abs(betweenAngle_rad-angle)<0.05)
-            {
-                stopMotor(RightSide);
-                //pthread_t tid=motorThread.native_handle();
-                //pthread_kill(tid,SIGTERM);
-                cout<<"motor thread destoryed";
-                break;
-            }
-            // !!!remember to refresh angle
-        }
-
-    }
-    else
-    {
-        rotaryEncoder infoEncoder;//this encoder only get the information of the encoder
-        int leftStartValue=infoEncoder.getStaticValue(LeftSide);
-        //int rightStartValue=infoEncoder.getStaticValue(RightSide);
-        //the rotate angle is positive,left motor keep still,the right motor start to move
-        //motor rightMotor(RightMotorIn3,RightMotorIn4);
-        int counts=40*PI/(wheelBaseLength*abs(angle)/(2*wheelRadius));
-
-        carStatus infoCarStatus;
-        float startSelfAngle=infoCarStatus.getCurAngleOfMPU();
-        while(1)
-        {
-            float k=1;
-            float w=k*sin(angle);
-            float v=-w*wheelBaseLength/2;
-            float vr,vl;
-
-            diffCalculator.uni2diff(v,w,vl,vr);
-            float wl=vl/wheelRadius;
-
-            lastDutyCycle=selfRotateThread(LeftSide,wl,lastDutyCycle);
-            //thread motorThread(&kinematicController::driveMotorThread,this,RightSide,wr);
-            //motorThread.detach();
-
-            int leftCurrentValue=infoEncoder.getStaticValue(LeftSide);
-            int accumulateValue=leftCurrentValue-leftStartValue;
-
-            float endSelfAngle=infoCarStatus.getCurAngleOfMPU();
-            float betweenAngle_rad=(endSelfAngle-startSelfAngle)/180*PI;
-
-            if(abs(betweenAngle_rad-angle)<0.05)
-            {
-                stopMotor(LeftSide);
-                //pthread_t tid=motorThread.native_handle();
-                //pthread_kill(tid,SIGTERM);
-                cout<<"motor thread destoryed";
-                break;
-            }
-        }
-    }
-}
-
-*/
-/*
-float kinematicController::selfRotateThread(int side,float velocity,float dutyCycle)
-{
-    if(side==LeftSide)
-    {
-        motor localMotor(LeftMotorIn1,LeftMotorIn2);
-        localMotor.setDutyCycle_k_1(dutyCycle);
-        localMotor.DriveMotor(velocity,side,150);
-        return localMotor.getDutyCycle_k();
-    }
-    else if(side==RightSide)
-    {
-        motor localMotor(RightMotorIn3,RightMotorIn4);
-        localMotor.setDutyCycle_k_1(dutyCycle);
-        localMotor.DriveMotor(velocity,side,150);
-        return localMotor.getDutyCycle_k();
-    }
-    else
-        std::cerr<<"Incorrect side input";
-}
-*/

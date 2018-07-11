@@ -14,9 +14,7 @@ line_formation_control::line_formation_control(float direction,float inter_dista
 void line_formation_control::start_line_formation()
 {
     carStatus cur_robot_statue;
-    kinematicController kine_control;
-    struct Robot_PID first_pid;/*=kine_control.get_first_pid();*/
-    int last_drive_side=5;
+//    int last_drive_side=5;
 //    kine_control.switchMode();
     while(1)
     {
@@ -27,7 +25,9 @@ void line_formation_control::start_line_formation()
 //        vector<vector<vector<float> > > agents_postion_3D={{{300,100,200}},{{111,100,0}},{{0,100,0},{1,100,0}}};
 
         if(agents_postion_3D.size()==0) continue;
-        vector<vector<vector<float> > > agents_postion_2D=subtract_one_dim(agents_postion_3D,1);
+        vector<vector<vector<float> > > agents_postion_2D=subtract_one_dim(agents_postion_3D,2);
+        reverse_axis(agents_postion_2D,1);
+
         vector<vector<float> > boundary_sorted=agents_postion_2D[agents_postion_2D.size()-1];
         vector<vector<float> > agents_position=get_agents_position(agents_postion_2D);
 
@@ -42,8 +42,25 @@ void line_formation_control::start_line_formation()
         vector<vector<float>> neighbor_2_agents=choose_nearest_two_neighbors_line(agents_dist_ang,this->m_direction_angle);
 
         vector<float> target_dist_ang=calc_target_dist_direction(neighbor_2_agents,rep_force);
+        vector<float> start_moving(target_dist_ang);
 //        start_moving(target_dist_ang,first_pid,last_drive_side);
         cout<<"pause...";
+    }
+}
+
+void line_formation_control::reverse_axis(vector<vector<vector<float> > > &original_data, int axis)
+{
+    for(int i=0;i<original_data.size();i++)
+    {
+        for(int j=0;j<original_data[i].size();j++)
+        {
+            if(axis>=original_data[i][j].size())
+            {
+                std::cerr<<"error reverse axis"<<std::endl;
+                break;
+            }
+            original_data[i][j][axis]*=-1;
+        }
     }
 }
 
@@ -388,105 +405,26 @@ vector<float> line_formation_control::calc_target_dist_direction(vector<vector<f
     return target_dist_ang;
 }
 
-//void line_formation_control::start_moving(vector<float> target_dist_ang,struct Robot_PID& successed_pid,int& last_drive_side)
-//{
-//    kinematicControl kine_control;
-//    float target_distance=target_dist_ang[0];
-//    float target_angle=target_dist_ang[1]*180/PI;//convert to degree
-//    robotStatus cur_robot_status;
+void line_formation_control::start_moving(vector<float> target_dist_ang)
+{
+    kinematicController kine_control;
+    float target_distance=target_dist_ang[0];
+    float target_angle_rad=target_dist_ang[1];
 
-//    if(cur_robot_status.getCurAngleOfMPU()>90 || cur_robot_status.getCurAngleOfMPU()<-90)
-//    {
-//        kine_control.SelfRotate(0);
-//    }
+    float move_speed_min=0.1;
+    float move_speed_max=0.3;
+    if(target_distance<30)
+        target_distance=0;
+    else if(target_distance>1000)
+        target_distance=1000;
+    target_distance=target_distance;
 
-//    if(target_distance<=60)
-//    {
-//        if(last_drive_side!=5)
-//            kine_control.back_rotate_two_motor(last_drive_side,0.2,1000);
-//        last_drive_side=5;
-//        return;
-//    }
-//    int move_side;
-//    if(target_angle<-45 &&target_angle>=-135)
-//    {
-//        move_side=right_side;
-//    }
-//    else if(target_angle>=-45 && target_angle<=45)
-//    {
-//        move_side=forward_side;
-//    }
-//    else if(target_angle>45&&target_angle<135)
-//    {
-//        move_side=LeftSide;
-//    }
-//    else
-//    {
-//        move_side=backward_side;
-//    }
+    float feed_back_ratio=(0.1*log(1+target_distance)-0.34)/0.4;
+    float move_speed=move_speed_min+feed_back_ratio*(move_speed_max-move_speed_min);
 
-//    float move_ratio_speed=std::min(target_distance,float(1000))/1000*0.35;
-//    float move_angle=0;
+    kine_control.moveForward(move_speed,target_angle_rad,0.4);
 
-//    if(last_drive_side!=move_side)
-//    {
-////        struct Robot_PID first_pid=kine_control.get_first_pid();
-//        successed_pid=kine_control.get_first_pid();
-////        motor_c motor;
-
-////        kine_control.switchMode();
-
-
-////        switch (move_side) {
-////        case left_side:
-////            if(cur_robot_status.get_if_motor_is_sleep(motor3_pin))
-////                motor.single_motor_setup(motor3_pin);
-////            if(cur_robot_status.get_if_motor_is_sleep(motor4_pin))
-////                motor.single_motor_setup(motor4_pin);
-////            break;
-////        case right_side:
-////            if(cur_robot_status.get_if_motor_is_sleep(motor1_pin))
-////                motor.single_motor_setup(motor1_pin);
-////            if(cur_robot_status.get_if_motor_is_sleep(motor2_pin))
-////                motor.single_motor_setup(motor2_pin);
-////            break;
-////        case forward_side:
-////            if(cur_robot_status.get_if_motor_is_sleep(motor1_pin))
-////                motor.single_motor_setup(motor1_pin);
-////            if(cur_robot_status.get_if_motor_is_sleep(motor3_pin))
-////                motor.single_motor_setup(motor3_pin);
-////            break;
-////        case backward_side:
-////            if(cur_robot_status.get_if_motor_is_sleep(motor2_pin))
-////                motor.single_motor_setup(motor2_pin);
-////            if(cur_robot_status.get_if_motor_is_sleep(motor4_pin))
-////                motor.single_motor_setup(motor4_pin);
-////            break;
-////        default:
-////            break;
-////        }
-//    }
-
-//    switch (move_side) {
-//    case left_side:
-////        move_angle=target_angle-90;
-//        successed_pid=kine_control.MoveLateral(move_angle,left_side,move_ratio_speed,500,successed_pid);
-//        break;
-//    case right_side:
-////        move_angle=target_angle+90;
-//        successed_pid=kine_control.MoveLateral(move_angle,right_side,move_ratio_speed,500,successed_pid);
-//        break;
-//    case forward_side:
-//        successed_pid=kine_control.MoveForward(target_angle,move_ratio_speed,500,successed_pid);
-//        break;
-//    case backward_side:
-//        successed_pid=kine_control.MoveForward(target_angle,move_ratio_speed,500,successed_pid);
-//        break;
-//    default:
-//        break;
-//    }
-//    last_drive_side=move_side;
-//}
+}
 
 vector<float> line_formation_control::artifical_potential_rep_field(vector<vector<float> > environment,vector<float> self_position,bool is_boundary)
 {

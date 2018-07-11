@@ -7,9 +7,9 @@
 #include<math.h>
 #include<sys/time.h>
 #include"wiringPi.h"
-#include"../globalsettings.h"
+#include"globalsettings.h"
 #include"log.h"
-#include"../carstatus.h"
+#include"carstatus.h"
 using namespace std;
 
 void split_string(const string original_str,vector<string>& vec_strs,const string& split_char);

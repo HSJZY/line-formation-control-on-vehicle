@@ -8,7 +8,7 @@ public:
     motor();
     motor(int pinA,int pinB);
 
-    void DriveMotor(float speed,int side,int totalTime);
+    void DriveMotor(float speed,int totalTime);
     void turnOffMotor();
     void turnOnMotor();
 
@@ -19,10 +19,12 @@ public:
     static int getLeftMotorDirection();
     static int getRightMotorDirection();
 
+    void driveMotor_dutycycle(float dutycycle,float driveTime_ms);
 
 private:
-    int sgn(float value);
     void pwmDriveMotor(float dutyCycle,float driveTime,int direction);
+    int sgn(float value);
+
 private:
 
     bool turnOff;

@@ -4,8 +4,8 @@
 #include<softPwm.h>
 #include<math.h>
 
-#include"../sensor/rotaryencoder.h"
-#include"../globalsettings.h"
+#include"rotaryencoder.h"
+#include"globalsettings.h"
 
 int motor::rightMotorDirection;
 int motor::leftMotorDirection;
@@ -93,15 +93,21 @@ void motor::turnOffMotor()
  *@param side: the left or right to drive,(0 for left;1 for right)
  *@param totalTime: total time to drive motor(ms)
  */
-void motor::DriveMotor(float speed,int side,int totalTime)
+void motor::DriveMotor(float speed,int totalTime)
 {
 
+    int side;
+    if(this->m_pinA==LeftMotorIn1 && this->m_pinB==LeftMotorIn2)
+        side= LeftSide;
+    else
+        side=RightSide;
+
     rotaryEncoder myEncoder;
-    if(side==0)
+    if(side==LeftSide)
     {
         this->leftMotorDirection=sgn(speed);
     }
-    else if(side ==1)
+    else if(side==RightSide)
     {
         this->rightMotorDirection=sgn(speed);
     }
@@ -118,10 +124,10 @@ void motor::DriveMotor(float speed,int side,int totalTime)
     {
         i++;
         float currentSpeed;
-        if(side==0)
-            currentSpeed=myEncoder.getStaticAngularVelocity(0);
-        else if(side==1)
-            currentSpeed=myEncoder.getStaticAngularVelocity(1);
+        if(side==LeftSide)
+            currentSpeed=myEncoder.getStaticAngularVelocity(LeftSide);
+        else if(side==RightSide)
+            currentSpeed=myEncoder.getStaticAngularVelocity(RightSide);
         else
             std::cerr<<"Please input the correct side";
 
@@ -160,6 +166,34 @@ void motor::DriveMotor(float speed,int side,int totalTime)
     }
 }
 
+void motor::driveMotor_dutycycle(float dutycycle, float driveTime_ms)
+{
+    int side,direction;
+    if(this->m_pinA==LeftMotorIn1 && this->m_pinB==LeftMotorIn2)
+        side= LeftSide;
+    else
+        side=RightSide;
+
+    if(side==LeftSide)
+    {
+        direction=sgn(dutycycle);
+        this->leftMotorDirection=sgn(dutycycle);
+    }
+    else
+    {
+        direction=sgn(dutycycle);
+        this->rightMotorDirection=sgn(dutycycle);
+    }
+
+    dutycycle=abs(dutycycle);
+
+    int n_iter=driveTime_ms/200;
+    for(int i=0;i<n_iter;i++)
+    {
+        pwmDriveMotor(dutycycle,10,direction);
+    }
+}
+
 void motor::pwmDriveMotor(float dutyCycle,float driveTime,int direction)
 {
 //    dutyCycle=0.15;
@@ -172,6 +206,10 @@ void motor::pwmDriveMotor(float dutyCycle,float driveTime,int direction)
     {
         std::cout<<"pin error, please set up pin firstly";
         return;
+    }
+    else if(m_pinA==RightMotorIn3&&m_pinB==RightMotorIn4)
+    {
+        direction*=-1;
     }
 
     pinMode(this->m_pinA,OUTPUT);

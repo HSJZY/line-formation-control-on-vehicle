@@ -404,12 +404,12 @@ void kinematicController::moveForward(float ratio_dutyCycle, float forwardAngle_
     int reverse_direction=1;
 
     //如果角度在－90到90度之外，保持向前的朝向，向反方向运行
-    if(forwardAngle_deg<-90)
+    if(forwardAngle_deg<-110)
     {
         forwardAngle_deg+=180;
         reverse_direction=-1;
     }
-    else if(forwardAngle_deg>90)
+    else if(forwardAngle_deg>110)
     {
         forwardAngle_deg-=180;
         reverse_direction=-1;
@@ -455,7 +455,7 @@ void kinematicController::moveForward(float ratio_dutyCycle, float forwardAngle_
 
         if(abs(diff_angle_rad)>0.02)
         {
-            float a=0.25;
+            float a=0.15;
             float b=1.35;
 
             float K_P=a*log(b+abs(diff_angle_rad))/2.0;

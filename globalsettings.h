@@ -17,7 +17,7 @@
 #define WheelBaseLength 0.13;// !!!these two number need to be justified after measurment
 
 
-#define robot_id 1
+#define robot_id 4
 
 //运动方向定义
 #define LeftSide 0

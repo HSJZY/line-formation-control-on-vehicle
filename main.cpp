@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include <QApplication>
-
 #include<iostream>
 #include<thread>
 #include<wiringPi.h>
@@ -92,11 +91,19 @@ void init_udp_thread()
     string addr="192.168.43.95";
     int port=5000;
     udp_client udp_test(addr,port);
-    udp_test.start_listen();
-    string recv_formation=udp_test.start_listen();
-    vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation);
-    carStatus cur_robot_status;
-    cur_robot_status.set_agents_position(vec_agents_position);
+    while(1)
+    {
+        string recv_formation=udp_test.start_listen();
+        if(recv_formation.empty())
+            continue;
+        else
+        {
+            vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation);
+            carStatus cur_robot_status;
+            cur_robot_status.set_agents_position(vec_agents_position);
+            break;
+        }
+    }
 
     thread agents_postion_listen_thread(update_postion_thread,addr,port);
     agents_postion_listen_thread.detach();
@@ -134,7 +141,7 @@ void lineThread(kinematicController lineRun)
 void test_move_thread()
 {
     line_formation_control line_formation;
-    vector<float> test_move={600,1};
+    vector<float> test_move={600,-2};
     int i=20;
     while(i--)
     {
@@ -167,7 +174,7 @@ int main(int argc, char *argv[])
 
     initMPU6050();
     init_udp_thread();
-    test_move_thread();
+//    test_move_thread();
 
     line_formation_control line_formation;
 
@@ -180,12 +187,12 @@ int main(int argc, char *argv[])
 //    return a.exec();
 
 
-    kinematicController Rotate,lineR;
+//    kinematicController Rotate,lineR;
 //    thread rotateThread(selfRotateThread,Rotate);
 //    rotateThread.join();
-    thread line(lineThread,lineR);
+//    thread line(lineThread,lineR);
     //line.detach();
-    line.join();
+//    line.join();
     //rotateThread.join();
 
 

@@ -3,7 +3,7 @@
 line_formation_control::line_formation_control()
 {
     this->m_direction_angle=0;
-    this->m_inter_distance=700;
+    this->m_inter_distance=600;
 }
 line_formation_control::line_formation_control(float direction,float inter_distance)
 {
@@ -22,9 +22,9 @@ void line_formation_control::start_line_formation()
 
         vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
 
-//        vector<vector<vector<float> > > agents_postion_3D={{{300,100,200}},{{111,100,0}},{{0,100,0},{1,100,0}}};
+//        vector<vector<vector<float> > > agents_postion_3D={{{40.68,-490.4,2529.24}},{{-524.63,130.59,2602.38}},{{-517.21,128.82,2567.48}},{{311.26,13.84,2633.51}},{{-1290.2,672.04,2613.99},{1790.2,672.04,2613.99},{1790.2,-927.96,2613.99}}};
 
-        if(agents_postion_3D.size()==0) continue;
+        if(agents_postion_3D.empty()) continue;
         vector<vector<vector<float> > > agents_postion_2D=subtract_one_dim(agents_postion_3D,2);
         reverse_axis(agents_postion_2D,1);
 
@@ -42,7 +42,7 @@ void line_formation_control::start_line_formation()
         vector<vector<float>> neighbor_2_agents=choose_nearest_two_neighbors_line(agents_dist_ang,this->m_direction_angle);
 
         vector<float> target_dist_ang=calc_target_dist_direction(neighbor_2_agents,rep_force);
-        vector<float> start_moving(target_dist_ang);
+        start_moving(target_dist_ang);
 //        start_moving(target_dist_ang,first_pid,last_drive_side);
         cout<<"pause...";
     }
@@ -123,7 +123,7 @@ vector<vector<vector<float> > > line_formation_control::subtract_one_dim(vector<
 /// 傻瓜排序，我也是醉了！！！
 /// \brief line_formation_control::calc_boundary
 /// sort the agents postition to the sequence as follow
-///   4..3    或者: ....  或者:   ....
+///   4..3    或者: ....  或者:  ....
 ///   .  .         .  .         .  .
 ///   1..2         1..2         1...
 /// \param agents_position_2D

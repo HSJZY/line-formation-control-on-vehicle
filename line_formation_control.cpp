@@ -411,15 +411,15 @@ void line_formation_control::start_moving(vector<float> target_dist_ang)
     float target_distance=target_dist_ang[0];
     float target_angle_rad=target_dist_ang[1];
 
-    float move_speed_min=0.1;
-    float move_speed_max=0.3;
+    float move_speed_min=0.09;
+    float move_speed_max=0.166665;
     if(target_distance<30)
-        target_distance=0;
-    else if(target_distance>1000)
-        target_distance=1000;
+        return;
+    else if(target_distance>800)
+        target_distance=800;
     target_distance=target_distance;
 
-    float feed_back_ratio=(0.1*log(1+target_distance)-0.34)/0.4;
+    float feed_back_ratio=(0.1*log(1+target_distance)-0.34)/0.36;
     float move_speed=move_speed_min+feed_back_ratio*(move_speed_max-move_speed_min);
 
     kine_control.moveForward(move_speed,target_angle_rad,0.4);

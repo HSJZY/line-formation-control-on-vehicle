@@ -129,7 +129,7 @@ void kinematicController::selfRotate(float angle)
 
         float curAngle_rad=curAngle/180*PI;
         float rotateAngle_rad=endSelfAngle_rad-curAngle_rad;
-        if(abs(rotateAngle_rad)<0.05)
+        if(abs(rotateAngle_rad)<0.2)
             break;
 
         float k_p=10;
@@ -141,12 +141,16 @@ void kinematicController::selfRotate(float angle)
         float wl=vl/wheelRadius;
 
         if(abs(wr)<60) wr=sgn(wr)*60;
-        else if(abs(wr)>200) wr=sgn(wr)*200;
+        else if(abs(wr)>100) wr=sgn(wr)*100;
         if(abs(wl)<60) wl=sgn(wl)*60;
-        else if(abs(wl)>200) wl=sgn(wl)*200;
+        else if(abs(wl)>100) wl=sgn(wl)*100;
 
-        thread leftMotorThread(&kinematicController::runMotorThread,this,LeftSide,wl,leftDutyCycle_k);
-        thread rightmotorThread(&kinematicController::runMotorThread,this,RightSide,wr,rightDutyCycle_k );
+        float left_dutycycle=sgn(wl)*0.15;
+        float right_dutycycle=sgn(wr)*0.15;
+
+
+        thread leftMotorThread(&kinematicController::runMotorThread_dutycycle,this,LeftSide,left_dutycycle);
+        thread rightmotorThread(&kinematicController::runMotorThread_dutycycle,this,RightSide,right_dutycycle );
 
         leftMotorThread.join();
         rightmotorThread.join();
@@ -404,16 +408,22 @@ void kinematicController::moveForward(float ratio_dutyCycle, float forwardAngle_
     int reverse_direction=1;
 
     //如果角度在－90到90度之外，保持向前的朝向，向反方向运行
-    if(forwardAngle_deg<-110)
+    if(forwardAngle_deg<-90)
     {
         forwardAngle_deg+=180;
         reverse_direction=-1;
     }
-    else if(forwardAngle_deg>110)
+    else if(forwardAngle_deg>90)
     {
         forwardAngle_deg-=180;
         reverse_direction=-1;
     }
+    carStatus infoCar;
+    float rotate_angle=(infoCar.getCurAngleOfMPU()-forwardAngle_deg);
+    if(abs(rotate_angle)>90)
+        this->self_rotate_target(forwardAngle_deg);
+
+
     forwardAngle_rad=forwardAngle_deg/180*PI;
 
     ratio_dutyCycle*=reverse_direction;
@@ -447,7 +457,7 @@ void kinematicController::moveForward(float ratio_dutyCycle, float forwardAngle_
         float leftAppend_dtcy=0;
         float rightAppend_dtcy=0;
 
-        carStatus infoCar;
+
         float curAngle_deg=infoCar.getCurAngleOfMPU();
         float curAngle_rad=curAngle_deg/180*PI;
 

@@ -98,6 +98,7 @@ void init_udp_thread()
             continue;
         else
         {
+            delay(2000);
             vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation);
             carStatus cur_robot_status;
             cur_robot_status.set_agents_position(vec_agents_position);
@@ -141,9 +142,14 @@ void lineThread(kinematicController lineRun)
 void test_move_thread()
 {
     line_formation_control line_formation;
-    vector<float> test_move={600,-2};
-    int i=20;
+    vector<float> test_move={800,-2};
+    int i=10;
     while(i--)
+    {
+    line_formation.start_moving(test_move);
+    }
+    test_move={50,-1.5};
+    while(i++!=20)
     {
     line_formation.start_moving(test_move);
     }

@@ -40,7 +40,8 @@ SOURCES += main.cpp\
     mpu/I2Cdev.cpp \
     mpu/MPU6050.cpp \
     rotaryencoder.cpp \
-    utils.cpp
+    utils.cpp \
+    arbitary_formation_control.cpp
 
 HEADERS  += mainwindow.h \
     carstatus.h \
@@ -59,7 +60,8 @@ HEADERS  += mainwindow.h \
     mpu/I2Cdev.h \
     mpu/MPU6050.h \
     mpu/MPU6050_6Axis_MotionApps20.h \
-    rotaryencoder.h
+    rotaryencoder.h \
+    arbitary_formation_control.h
 
 unix:!macx: LIBS += -L$$PWD/../../../../usr/local/lib/ -lwiringPi -lopencv_calib3d -lARToolKitPlus -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_imgproc
 

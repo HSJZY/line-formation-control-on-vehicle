@@ -407,12 +407,14 @@ vector<float> line_formation_control::calc_target_dist_direction(vector<vector<f
 
 void line_formation_control::start_moving(vector<float> target_dist_ang)
 {
+    if(target_dist_ang.empty())
+        return;
     kinematicController kine_control;
     float target_distance=target_dist_ang[0];
     float target_angle_rad=target_dist_ang[1];
 
-    float move_speed_min=0.09;
-    float move_speed_max=0.166665;
+    float move_speed_min=0.11;
+    float move_speed_max=0.22;
     if(target_distance<30)
         return;
     else if(target_distance>800)
@@ -481,7 +483,7 @@ vector<float> line_formation_control::artifical_potential_rep_field(vector<vecto
         {
             if(environment[i].empty())
                 continue;
-            vector<float> rep_force_i=potential_field_two_point(self_position,environment[i],600);
+            vector<float> rep_force_i=potential_field_two_point(self_position,environment[i],300);
             rep_force[0]+=rep_force_i[0];
             rep_force[1]+=rep_force_i[1];
         }

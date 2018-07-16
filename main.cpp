@@ -68,9 +68,8 @@ void initMPU6050()
     mpuThread.detach();
 }
 
-void update_postion_thread(string addr,int port)
+void update_postion_thread(udp_client udp_listener)
 {
-    udp_client udp_listener(addr,port);
     carStatus cur_robot_status;
     while(1)
     {
@@ -106,7 +105,7 @@ void init_udp_thread()
         }
     }
 
-    thread agents_postion_listen_thread(update_postion_thread,addr,port);
+    thread agents_postion_listen_thread(update_postion_thread,udp_test);
     agents_postion_listen_thread.detach();
 }
 

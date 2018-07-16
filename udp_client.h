@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include"globalsettings.h"
 #include<thread>
+#include<wiringPi.h>
 
 using namespace std;
 

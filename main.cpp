@@ -16,6 +16,7 @@
 #include"udp_client.h"
 #include"utils.h"
 #include"line_formation_control.h"
+#include"test_program.h"
 
 using namespace std;
 using namespace cv;
@@ -140,7 +141,7 @@ void lineThread(kinematicController lineRun)
 }
 void test_move_thread()
 {
-    line_formation_control line_formation;
+    formation_control line_formation;
     vector<float> test_move={800,-2};
     int i=10;
     while(i--)
@@ -176,9 +177,11 @@ int main(int argc, char *argv[])
     leftMotor.turnOnMotor();
     rightMotor.turnOnMotor();
 
+    test_calc_input_ui();
+
 
     initMPU6050();
-    init_udp_thread();
+//    init_udp_thread();
 //    test_move_thread();
 
     line_formation_control line_formation;

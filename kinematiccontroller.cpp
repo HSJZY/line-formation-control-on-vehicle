@@ -129,7 +129,7 @@ void kinematicController::selfRotate(float angle)
 
         float curAngle_rad=curAngle/180*PI;
         float rotateAngle_rad=endSelfAngle_rad-curAngle_rad;
-        if(abs(rotateAngle_rad)<0.2)
+        if(abs(rotateAngle_rad)<1)
             break;
 
         float k_p=10;
@@ -145,8 +145,8 @@ void kinematicController::selfRotate(float angle)
         if(abs(wl)<60) wl=sgn(wl)*60;
         else if(abs(wl)>100) wl=sgn(wl)*100;
 
-        float left_dutycycle=sgn(wl)*0.15;
-        float right_dutycycle=sgn(wr)*0.15;
+        float left_dutycycle=sgn(wl)*0.2;
+        float right_dutycycle=sgn(wr)*0.2;
 
 
         thread leftMotorThread(&kinematicController::runMotorThread_dutycycle,this,LeftSide,left_dutycycle);

@@ -20,9 +20,9 @@ void line_formation_control::start_line_formation()
     {
         if (cur_robot_statue.get_formation_is_stop_state()==true)break;
 
-        vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
+//        vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
 
-//        vector<vector<vector<float> > > agents_postion_3D={{{40.68,-490.4,2529.24}},{{-524.63,130.59,2602.38}},{{-517.21,128.82,2567.48}},{{311.26,13.84,2633.51}},{{-1290.2,672.04,2613.99},{1790.2,672.04,2613.99},{1790.2,-927.96,2613.99}}};
+        vector<vector<vector<float> > > agents_postion_3D={{{40.68,-490.4,2529.24}},{{-524.63,130.59,2602.38}},{{-517.21,128.82,2567.48}},{{311.26,13.84,2633.51}},{{-1290.2,672.04,2613.99},{1790.2,672.04,2613.99},{1790.2,-927.96,2613.99}}};
 
         if(agents_postion_3D.empty()) continue;
         vector<vector<vector<float> > > agents_postion_2D=subtract_one_dim(agents_postion_3D,2);
@@ -30,13 +30,8 @@ void line_formation_control::start_line_formation()
 
         vector<vector<float> > boundary_sorted=agents_postion_2D[agents_postion_2D.size()-1];
         vector<vector<float> > agents_position=get_agents_position(agents_postion_2D);
-
         vector<float> rep_force=calc_rep_force(boundary_sorted,agents_position);
-        if(boundary_sorted.empty())
-        {
-            cerr<<"检测出错啦！！！！";
-            break;
-        }
+
         vector<vector<float> > agents_relative_self_2D=calc_relative_pos(agents_position,agents_position[robot_id-1]);
         vector<vector<float> > agents_dist_ang=convert_2D_dist_ang(agents_relative_self_2D);
         vector<vector<float>> neighbor_2_agents=choose_nearest_two_neighbors_line(agents_dist_ang,this->m_direction_angle);
@@ -48,77 +43,7 @@ void line_formation_control::start_line_formation()
     }
 }
 
-void line_formation_control::reverse_axis(vector<vector<vector<float> > > &original_data, int axis)
-{
-    for(int i=0;i<original_data.size();i++)
-    {
-        for(int j=0;j<original_data[i].size();j++)
-        {
-            if(axis>=original_data[i][j].size())
-            {
-                std::cerr<<"error reverse axis"<<std::endl;
-                break;
-            }
-            original_data[i][j][axis]*=-1;
-        }
-    }
-}
 
-vector<float> line_formation_control::calc_rep_force(vector<vector<float> > boundary, vector<vector<float> > agents_position)
-{
-    vector<vector<float> > other_agents_position;
-    vector<float> self_position=agents_position[robot_id-1];
-    for(int i=0;i<agents_position.size();i++)
-    {
-        if(i==robot_id-1)
-        {
-            continue;
-        }
-        other_agents_position.push_back(agents_position[i]);
-    }
-    vector<float> rep_force_boundary=artifical_potential_rep_field(boundary,self_position,true);
-    vector<float> rep_force_agents_between=artifical_potential_rep_field(other_agents_position,self_position);
-    vector<float> rep_force;
-    for(int i=0;i<rep_force_boundary.size();i++)
-    {
-        rep_force.push_back(rep_force_boundary[i]+rep_force_agents_between[i]);
-    }
-    return rep_force;
-}
-
-vector<vector<float> > line_formation_control::get_agents_position(vector<vector<vector<float> > > agents_postion_2D)
-{
-    vector<vector<float> > agents_postion;
-     for(int i=0;i<agents_postion_2D.size()-1;i++)
-     {
-         for(int j=0;j<agents_postion_2D[i].size();j++)
-         {
-             agents_postion.push_back(agents_postion_2D[i][j]);
-         }
-     }
-     return agents_postion;
-}
-
-vector<vector<vector<float> > > line_formation_control::subtract_one_dim(vector<vector<vector<float> > > agents_postion_3D, int dim)
-{
-    vector<vector<vector<float> > >  agents_postion_subtracted;
-    for(int i=0;i<agents_postion_3D.size();i++)
-    {
-        vector<vector<float> > agent_i_2D;
-        for(int j=0;j<agents_postion_3D[i].size();j++)
-        {
-            vector<float> agent_2D;
-            for(int k=0;k<agents_postion_3D[i][j].size();k++)
-            {
-                if(k!=dim)
-                    agent_2D.push_back(agents_postion_3D[i][j][k]);
-            }
-            agent_i_2D.push_back(agent_2D);
-        }
-        agents_postion_subtracted.push_back(agent_i_2D);
-    }
-    return agents_postion_subtracted;
-}
 
 /// 傻瓜排序，我也是醉了！！！
 /// \brief line_formation_control::calc_boundary
@@ -218,20 +143,6 @@ vector<vector<float> > line_formation_control::calc_boundary(vector<vector<vecto
     }
 }
 
-vector<vector<float> > line_formation_control::calc_relative_pos(vector<vector<float> > abs_pos, vector<float> original)
-{
-    vector<vector<float> > relative_pos;
-    for(int i=0;i<abs_pos.size();i++)
-    {
-        vector<float> relative_one_point;
-        for(int j=0;j<abs_pos[i].size();j++)
-        {
-            relative_one_point.push_back(abs_pos[i][j]-original[j]);
-        }
-        relative_pos.push_back(relative_one_point);
-    }
-    return relative_pos;
-}
 
 vector<vector<float> > line_formation_control::convert_2D_dist_ang(vector<vector<float> > relative_pos)
 {
@@ -405,88 +316,6 @@ vector<float> line_formation_control::calc_target_dist_direction(vector<vector<f
     return target_dist_ang;
 }
 
-void line_formation_control::start_moving(vector<float> target_dist_ang)
-{
-    if(target_dist_ang.empty())
-        return;
-    kinematicController kine_control;
-    float target_distance=target_dist_ang[0];
-    float target_angle_rad=target_dist_ang[1];
 
-    float move_speed_min=0.11;
-    float move_speed_max=0.22;
-    if(target_distance<30)
-        return;
-    else if(target_distance>800)
-        target_distance=800;
-    target_distance=target_distance;
 
-    float feed_back_ratio=(0.1*log(1+target_distance)-0.34)/0.36;
-    float move_speed=move_speed_min+feed_back_ratio*(move_speed_max-move_speed_min);
 
-    kine_control.moveForward(move_speed,target_angle_rad,0.4);
-
-}
-
-vector<float> line_formation_control::artifical_potential_rep_field(vector<vector<float> > environment,vector<float> self_position,bool is_boundary)
-{
-    if(is_boundary)
-    {
-        if(environment.empty()==0)
-        {
-            vector<float> combine={0,0};
-            return combine;
-        }
-        if(environment.size()==1)
-        {
-            vector<float> buttom={self_position[0],environment[0][1]};
-            vector<float> left={environment[0][0],self_position[1]};
-            vector<float> buttom_force=potential_field_two_point(self_position,buttom,300);
-            vector<float> left_force=potential_field_two_point(self_position,left,300);
-            vector<float> combine={buttom_force[0]+left_force[1],buttom_force[1]+left_force[1]};
-            return combine;
-        }
-        else if(environment.size()==2)
-        {
-            vector<float> buttom={self_position[0],environment[0][1]};
-            vector<float> left={environment[0][0],self_position[1]};
-            vector<float> right={environment[1][0],self_position[1]};
-            vector<float> buttom_force=potential_field_two_point(self_position,buttom,300);
-            vector<float> left_force=potential_field_two_point(self_position,left,300);
-            vector<float> right_force=potential_field_two_point(self_position,right,300);
-            vector<float> combine={buttom_force[0]+left_force[0]+right_force[0],buttom_force[1]+left_force[1]+right_force[1]};
-            return combine;
-        }
-        else if(environment.size()>=3)
-        {
-            vector<float> buttom={self_position[0],environment[0][1]};
-            vector<float> left={environment[0][0],self_position[1]};
-            vector<float> right={environment[1][0],self_position[1]};
-            vector<float> top={self_position[0],environment[2][1]};
-            vector<float> buttom_force=potential_field_two_point(self_position,buttom,300);
-            vector<float> left_force=potential_field_two_point(self_position,left,300);
-            vector<float> right_force=potential_field_two_point(self_position,right,300);
-            vector<float> top_force=potential_field_two_point(self_position,top,300);
-            vector<float> combine={buttom_force[0]+left_force[0]+right_force[0]+top_force[0],buttom_force[1]+left_force[1]+right_force[1]+top_force[1]};
-            return combine;
-        }
-        else
-        {
-            vector<float> combine={0,0};
-            return combine;
-        }
-    }
-    else
-    {
-        vector<float> rep_force={0,0};
-        for(int i=0;i<environment.size();i++)
-        {
-            if(environment[i].empty())
-                continue;
-            vector<float> rep_force_i=potential_field_two_point(self_position,environment[i],300);
-            rep_force[0]+=rep_force_i[0];
-            rep_force[1]+=rep_force_i[1];
-        }
-        return rep_force;
-    }
-}

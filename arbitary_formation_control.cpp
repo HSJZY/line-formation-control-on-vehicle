@@ -11,21 +11,40 @@ void arbitary_formation_control::start_formation()
     while(1)
     {
         if (cur_robot_statue.get_formation_is_stop_state()==true)break;
-        vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
+//        vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
+//        vector<int> hung_assignment=cur_robot_statue.get_hung_assignment();
+
+        vector<vector<vector<float> > > agents_postion_3D={{{0,0,1}},{{-800,0,0}},{{-800,800,0}},{{0,800,0}},{{-20000,0,0}}};
+        vector<int> hung_assignment={2,3,0,1};
+
+
         if(agents_postion_3D.empty()) continue;
         vector<vector<vector<float> > > agents_postion_2D=subtract_one_dim(agents_postion_3D,2);
         reverse_axis(agents_postion_2D,1);
+
         vector<vector<float> > boundary_sorted=agents_postion_2D[agents_postion_2D.size()-1];
         vector<vector<float> > agents_position=get_agents_position(agents_postion_2D);
         vector<float> rep_force=calc_rep_force(boundary_sorted,agents_position);
 
-        vector<vector<float> > cur_others_self_2D=calc_relative_pos(agents_position,agents_position[robot_id-1]);
+        vector<vector<float> > after_hungarian_changed=calc_hungarian_changed(agents_position,hung_assignment);
+
+        vector<vector<float> > cur_others_self_2D=calc_relative_pos(after_hungarian_changed,agents_position[hung_assignment[robot_id-1]]);
         vector<vector<float> > xi_di=subtract_two_vector(cur_others_self_2D,this->m_target_formation);
-        vector<float> ui=calc_input_ui(this->m_formation_topology,xi_di);
+        vector<float> ui=calc_input_ui(this->m_formation_topology,xi_di,hung_assignment);
         vector<float> ui_a_rep=add_two_vector(rep_force,ui);
         vector<float> ui_target_dis_ang=convert_2D_disAng(ui_a_rep);
         start_moving(ui_target_dis_ang);
     }
+}
+
+vector<vector<float> > arbitary_formation_control::calc_hungarian_changed(vector<vector<float> > orig_matrix,vector<int> hung_array)
+{
+    vector<vector<float> > res_hungar_matrix;
+    for(int i=0;i<hung_array.size();i++)
+    {
+        res_hungar_matrix.push_back(orig_matrix[hung_array[i]]);
+    }
+    return res_hungar_matrix;
 }
 
 void  arbitary_formation_control::set_formation_assignment(vector<vector<float> > assignment)
@@ -51,9 +70,9 @@ void  arbitary_formation_control::set_formation_assignment(vector<vector<float> 
         for(int j=0;j<assignment.size();j++)
         {
             if(j==i)
-                topo_i.push_back(assignment.size()-1);
+                topo_i.push_back(-(assignment.size()-1));
             else
-                topo_i.push_back(-1);
+                topo_i.push_back(1);
         }
         topology.push_back(topo_i);
     }
@@ -71,7 +90,7 @@ vector<vector<float> > arbitary_formation_control::subtract_two_vector(vector<ve
     for(int i=0;i<vec_1.size();i++)
     {
         vector<float> subtracted_i;
-        for(int j=0;j<vec_2.size();j++)
+        for(int j=0;j<vec_1[0].size();j++)
         {
             subtracted_i.push_back(vec_1[i][j]-vec_2[i][j]);
         }
@@ -79,16 +98,17 @@ vector<vector<float> > arbitary_formation_control::subtract_two_vector(vector<ve
     }
     return after_subtract;
 }
-vector<float> arbitary_formation_control::calc_input_ui(vector<vector<int> > L_G, vector<vector<float> > xi_di)
+vector<float> arbitary_formation_control::calc_input_ui(vector<vector<int> > L_G, vector<vector<float> > xi_di,vector<int> hung_assignment)
 {
     vector<float> ui;
-    vector<int> L_G_i=L_G[robot_id-1];
+    vector<int> L_G_i=L_G[hung_assignment[robot_id-1]];
+
     for(int i=0;i<xi_di[0].size();i++)
     {
         float ui_axis=0;
         for(int j=0;j<L_G_i.size();j++)
         {
-            ui_axis+=L_G_i[j]*xi_di[j][i];
+            ui_axis+=(L_G_i[j]*xi_di[j][i])/(L_G_i.size()-1);
         }
         ui.push_back(ui_axis);
     }

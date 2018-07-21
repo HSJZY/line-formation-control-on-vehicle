@@ -381,8 +381,6 @@ void kinematicController::lineForward(float forwardDistance)
             //rightSetVelocity=rightSetVelocity+k_a*rotateAngle;
         //else if(rotateAngle<0)
             //leftSetVelocity=leftSetVelocity+k_a*rotateAngle;
-
-
         //float leftDutyCycle_k_1=leftMotorThread([&](){runMotorThread(LeftSide,leftSetVelocity,leftDutyCycle_k);});
 
         thread leftMotorThread(&kinematicController::runMotorThread,this,LeftSide,leftSetVelocity,leftDutyCycle_k);
@@ -407,21 +405,41 @@ void kinematicController::moveForward(float ratio_dutyCycle, float forwardAngle_
     float forwardAngle_deg=forwardAngle_rad*180/PI;
     int reverse_direction=1;
 
+    carStatus infoCar;
+
     //如果角度在－90到90度之外，保持向前的朝向，向反方向运行
-    if(forwardAngle_deg<-90)
+    if(forwardAngle_deg<-120)
     {
         forwardAngle_deg+=180;
         reverse_direction=-1;
     }
-    else if(forwardAngle_deg>90)
+    else if(forwardAngle_deg>120)
     {
         forwardAngle_deg-=180;
         reverse_direction=-1;
     }
-    carStatus infoCar;
+    else if(forwardAngle_deg<-70 ||forwardAngle_deg>70)
+    {
+        float cur_yaw=infoCar.getCurAngleOfMPU();
+        if(sgn(cur_yaw)*sgn(forwardAngle_deg)<0)
+        {
+            if(forwardAngle_deg<0)
+            {
+                forwardAngle_deg+=180;
+                reverse_direction=-1;
+            }
+            else
+            {
+                forwardAngle_deg-=180;
+                reverse_direction=-1;
+            }
+        }
+    }
+
     float rotate_angle=(infoCar.getCurAngleOfMPU()-forwardAngle_deg);
-    if(abs(rotate_angle)>90)
-        this->self_rotate_target(forwardAngle_deg);
+
+//    if(abs(rotate_angle)>90)
+//        this->self_rotate_target(forwardAngle_deg);
 
 
     forwardAngle_rad=forwardAngle_deg/180*PI;

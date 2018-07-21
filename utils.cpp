@@ -44,7 +44,7 @@ void write_yaw_file(string filename)
 }
 
 //这代码写完不想看第二遍，去tm的，能用就行，WTF！！！
-vector<vector<vector<float> > > parse_agents_position(string global_infomation)
+vector<vector<vector<float> > > parse_agents_position(string global_infomation,vector<int>& hungarian_assignment)
 {
     vector<string> vec_info_markers;
 
@@ -54,8 +54,29 @@ vector<vector<vector<float> > > parse_agents_position(string global_infomation)
         return agents_position;
 
     split_string(global_infomation,vec_info_markers,"|");
-    for(int i=0;i<vec_info_markers.size();i++)
+//    vector<int> hungarian_assignment;
+
+    // get hungarian_assignment result
+    if(vec_info_markers.back()[0]=='h')
     {
+        string hung_str=vec_info_markers.back();
+        vector<string> hung_str_splited;
+        split_string(hung_str,hung_str_splited,"[");
+        hung_str=hung_str_splited.back().substr(0,hung_str_splited.back().size()-1);
+        if(hung_str!="None")
+        {
+            vector<string> index_str;
+            split_string(hung_str,index_str,",");
+            for(int i=0;i<index_str.size();i++)
+            {
+                hungarian_assignment.push_back(atoi(index_str[i].c_str()));
+            }
+            vec_info_markers.erase(vec_info_markers.end()-1,vec_info_markers.end());
+        }
+    }
+
+    for(int i=0;i<vec_info_markers.size();i++)
+    {        
         string marker_i_info=vec_info_markers[i];//这里得到的结果是string 类型的marker_i:(1,2,3),(4,5,6)
         vector<string> vec_marker_i;
         split_string(marker_i_info,vec_marker_i,":");//这里得到的结果vector类型的[[marker_i],[(1,2,3),(4,5,6)]]

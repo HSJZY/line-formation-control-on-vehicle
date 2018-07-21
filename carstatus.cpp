@@ -4,6 +4,7 @@
 float carStatus::m_initAngleOfMPU;
 float carStatus::m_curAngleOfMPU;
 float carStatus::m_absAngleOfMPU;
+vector<int> carStatus::vec_hung_assignment;
 
 vector<vector<vector<float> > > carStatus::vec_agents_postion;
 bool carStatus::formation_stop;
@@ -57,4 +58,13 @@ void carStatus::set_agents_position(vector<vector<vector<float> > > agents_posit
 vector<vector<vector<float> > > carStatus::get_agents_position()
 {
     return this->vec_agents_postion;
+}
+
+vector<int> carStatus::get_hung_assignment()
+{
+    return this->vec_hung_assignment;
+}
+void carStatus::set_hung_assignment(vector<int> vec_assig)
+{
+    this->vec_hung_assignment=vec_assig;
 }

@@ -19,8 +19,12 @@ public:
     bool get_formation_is_stop_state();
     void set_formation_stop(bool is_stop);
 
+    void set_hung_assignment(vector<int> vec_assig);
+    vector<int> get_hung_assignment();
+
 private:
     static vector<vector<vector<float> > > vec_agents_postion;
+    static vector<int> vec_hung_assignment;
 
     static bool formation_stop;
 

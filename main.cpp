@@ -98,10 +98,15 @@ void init_udp_thread()
             continue;
         else
         {
-            delay(2000);
-            vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation);
+            delay(200);
+            vector<int> hungarian_assignment;
+            vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation,hungarian_assignment);
             carStatus cur_robot_status;
             cur_robot_status.set_agents_position(vec_agents_position);
+            if(!hungarian_assignment.empty())
+            {
+                cur_robot_status.set_hung_assignment(hungarian_assignment);
+            }
             break;
         }
     }
@@ -155,6 +160,13 @@ void test_move_thread()
     }
 }
 
+void start_arbitary_formation()
+{
+    vector<vector<float> > target_formation_H={{0,0},{1000,0},{1000,1000},{0,1000}};
+    arbitary_formation_control arbit_formation(target_formation_H);
+    arbit_formation.start_formation();
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -177,11 +189,12 @@ int main(int argc, char *argv[])
     leftMotor.turnOnMotor();
     rightMotor.turnOnMotor();
 
-    test_calc_input_ui();
+//    test_calc_input_ui();
 
 
     initMPU6050();
-//    init_udp_thread();
+    init_udp_thread();
+    start_arbitary_formation();
 //    test_move_thread();
 
     line_formation_control line_formation;

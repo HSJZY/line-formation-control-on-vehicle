@@ -26,6 +26,6 @@ void test_calc_input_ui()
     arbitary_formation_control arbitary_formation(vec_h);
     vector<vector<int> > L_G={{3,-1,-1,-1},{-1,3,-1,-1},{-1,-1,3,-1},{-1,-1,-1,3}};
     vector<vector<float> > xi_di={{0,0},{0,0},{0,-1},{0,0}};
-    auto res=arbitary_formation.calc_input_ui(L_G,xi_di);
+//    auto res=arbitary_formation.calc_input_ui(L_G,xi_di);
     cout<<"pause";
 }

@@ -14,8 +14,8 @@ void arbitary_formation_control::start_formation()
 //        vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
 //        vector<int> hung_assignment=cur_robot_statue.get_hung_assignment();
 
-        vector<vector<vector<float> > > agents_postion_3D={{{0,0,1}},{{-800,0,0}},{{-800,800,0}},{{0,800,0}},{{-20000,0,0}}};
-        vector<int> hung_assignment={2,3,0,1};
+        vector<vector<vector<float> > > agents_postion_3D={{{1236,-503,1}},{{-147.85,1.64,0}},{{-433,-436,0}},{{-183,506.3,0}},{}};
+        vector<int> hung_assignment={3,1,0,2};
 
 
         if(agents_postion_3D.empty()) continue;
@@ -28,8 +28,12 @@ void arbitary_formation_control::start_formation()
 
         vector<vector<float> > after_hungarian_changed=calc_hungarian_changed(agents_position,hung_assignment);
 
-        vector<vector<float> > cur_others_self_2D=calc_relative_pos(after_hungarian_changed,agents_position[hung_assignment[robot_id-1]]);
-        vector<vector<float> > xi_di=subtract_two_vector(cur_others_self_2D,this->m_target_formation);
+        vector<vector<float> > cur_others_self_2D=calc_relative_pos(after_hungarian_changed,agents_position[robot_id-1]);
+        vector<vector<float> > cur_target_to_self=calc_relative_pos(this->m_target_formation,m_target_formation[hung_assignment[robot_id-1]]);
+//        reverse_axis(this->m_target_formation,1);
+//        vector<vector<float> > hung_target_formation=calc_hungarian_changed(this->m_target_formation,hung_assignment);
+
+        vector<vector<float> > xi_di=subtract_two_vector(cur_others_self_2D,cur_target_to_self);
         vector<float> ui=calc_input_ui(this->m_formation_topology,xi_di,hung_assignment);
         vector<float> ui_a_rep=add_two_vector(rep_force,ui);
         vector<float> ui_target_dis_ang=convert_2D_disAng(ui_a_rep);
@@ -39,10 +43,10 @@ void arbitary_formation_control::start_formation()
 
 vector<vector<float> > arbitary_formation_control::calc_hungarian_changed(vector<vector<float> > orig_matrix,vector<int> hung_array)
 {
-    vector<vector<float> > res_hungar_matrix;
+    vector<vector<float> > res_hungar_matrix(4,vector<float>());
     for(int i=0;i<hung_array.size();i++)
     {
-        res_hungar_matrix.push_back(orig_matrix[hung_array[i]]);
+        res_hungar_matrix[hung_array[i]]=orig_matrix[i];
     }
     return res_hungar_matrix;
 }

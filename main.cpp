@@ -80,7 +80,9 @@ void update_postion_thread(udp_client udp_listener)
             std::cerr<<"connenction error";
             continue;
         }
-        vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation);
+        vector<int> hun_index;
+        vector<vector<vector<float> > > vec_agents_position=parse_agents_position(recv_formation,hun_index);
+        cur_robot_status.set_hung_assignment(hun_index);
         cur_robot_status.set_agents_position(vec_agents_position);
         delay(30);
     }
@@ -163,9 +165,9 @@ void test_move_thread()
 void start_arbitary_formation()
 {
     vector<vector<float> > target_formation_H={{0,0},{1000,0},{1000,1000},{0,1000}};
-    vector<vector<float> > target_formation_I={{0,-500},{0,0},{0,500},{0,1000}};
-    vector<vector<float> > target_formation_T={{-500,0},{0,-600},{0,-1200},{500,0}};
-    arbitary_formation_control arbit_formation(target_formation_H);
+    vector<vector<float> > target_formation_I={{0,-400},{0,0},{0,400},{0,800}};
+    vector<vector<float> > target_formation_T={{-400,0},{0,-200},{0,-800},{400,0}};
+    arbitary_formation_control arbit_formation(target_formation_T);
     arbit_formation.start_formation();
 }
 

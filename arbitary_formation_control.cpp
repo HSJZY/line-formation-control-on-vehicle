@@ -11,11 +11,11 @@ void arbitary_formation_control::start_formation()
     while(1)
     {
         if (cur_robot_statue.get_formation_is_stop_state()==true)break;
-//        vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
-//        vector<int> hung_assignment=cur_robot_statue.get_hung_assignment();
+        vector<vector<vector<float> > > agents_postion_3D=cur_robot_statue.get_agents_position();
+        vector<int> hung_assignment=cur_robot_statue.get_hung_assignment();
 
-        vector<vector<vector<float> > > agents_postion_3D={{{1236,-503,1}},{{-147.85,1.64,0}},{{-433,-436,0}},{{-183,506.3,0}},{}};
-        vector<int> hung_assignment={3,1,0,2};
+//        vector<vector<vector<float> > > agents_postion_3D={{{1236,-503,1}},{{-147.85,1.64,0}},{{-433,-436,0}},{{-183,506.3,0}},{}};
+//        vector<int> hung_assignment={3,1,0,2};
 
 
         if(agents_postion_3D.empty()) continue;
